@@ -7,7 +7,7 @@ async function main() {
   console.log("Deploying contracts with the account:", deployer.address);
 
   const TrustLendrFactory = await ethers.getContractFactory("TrustLendr");
-  const trustLendr: TrustLendr = await TrustLendrFactory.deploy({ from: deployer.address });
+  const trustLendr: TrustLendr = await TrustLendrFactory.deploy(deployer.address);
 
   console.log("TrustLendr address:", trustLendr);
 }

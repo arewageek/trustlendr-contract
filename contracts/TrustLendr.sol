@@ -23,8 +23,8 @@ contract TrustLendr is ERC20 {
     mapping(address => uint256) public loanRepaymentDates;
     mapping(address => uint256) public lateRepaymentFees;  
 
-    constructor () ERC20("TrustLendr Token", "TLT") {
-        owner = payable (msg.sender);
+    constructor (address _owner) ERC20("TrustLendr Token", "TLT") {
+        owner = payable (_owner);
         _mint(owner, 1000000000);
     }
 
