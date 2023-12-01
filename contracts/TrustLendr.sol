@@ -10,23 +10,40 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract TrustLendr {
-    using SafeERC20 for IERC20;
+contract TrustLendr is ERC20 {
+    using SafeERC20 for IERC20; 
 
     IERC20 public token;
+    address payable owner;
 
     mapping(address => uint256) public creditScores;
     mapping(address => uint256) public loanAmounts;
     mapping(address => uint256) public loanRepaymentDates;
-    mapping(address => uint256) public lateRepaymentFees;
+    mapping(address => uint256) public lateRepaymentFees;  
 
-    // uint256 public interestRate = 5; // 5% interest rate
+    constructor () ERC20("TrustLendr Token", "TLT") {
+        owner = payable (msg.sender);
+        _mint(owner, 1000000000);
+    }
 
     event LoanRequested(address indexed borrower, uint256 amount, uint256 repaymentDate, uint256 lateRepaymentFee);
     event LoanRepaid(address indexed borrower, uint256 amount, uint256 repaymentDate, uint256 lateRepaymentFee);
     event CreditScoreUpdated(address indexed borrower, uint256 newCreditScore);
-    
+
+    function getUserData(address account) public view returns (uint256[4] memory) {
+        uint256 score = creditScores[account];
+        uint256 loan = loanAmounts[account];
+        uint256 repayDate = loanRepaymentDates[account];
+        uint256 lateFee = lateRepaymentFees[account];
+        uint256[4] memory userData;
+        userData[0] = score;
+        userData[1] = loan;
+        userData[2] = repayDate;
+        userData[3] = lateFee;
+        return userData;
+    }
     function requestLoan(uint256 _amount, uint256 _repaymentDate, uint256 _interestRate, uint256 _lateRepaymentFee) external {
         require(_amount > 0, "Invalid loan amount");
 
@@ -38,7 +55,14 @@ contract TrustLendr {
         loanRepaymentDates[msg.sender] = _repaymentDate;
         lateRepaymentFees[msg.sender] = _lateRepaymentFee;
 
+        uint score = creditScores[msg.sender];
+
+        if(score == 0){
+            creditScores[msg.sender] = 850;
+        }
+
         emit LoanRequested(msg.sender, totalRepaymentAmount, _repaymentDate, _lateRepaymentFee);
+        _mint(msg.sender, _amount);
     }
 
     function repayLoan() external {
@@ -57,6 +81,7 @@ contract TrustLendr {
         lateRepaymentFees[msg.sender] = 0;
 
         emit LoanRepaid(msg.sender, totalRepaymentAmount, block.timestamp, lateRepaymentFees[msg.sender]);
+        _burn(msg.sender, loanAmounts[msg.sender]);
     }
 
     function updateCreditScore(address _user) internal {
@@ -65,15 +90,15 @@ contract TrustLendr {
             // Check if the loan is overdue
             if (block.timestamp > loanRepaymentDates[_user]) {
                 // Penalize the credit score for overdue loans
-                creditScores[_user] = creditScores[_user] > 10 ? creditScores[_user] - 10 : 0;
+                creditScores[_user] = creditScores[_user] > 50 ? creditScores[_user] - 50 : 0;
             } else {
                 // Reward the credit score for early repayments
-                creditScores[_user] += 5;
+                creditScores[_user] += 25;
             }
 
             // Ensure credit score is capped at 100
-            if (creditScores[_user] > 100) {
-                creditScores[_user] = 100;
+            if (creditScores[_user] > 850) {
+                creditScores[_user] = 850;
             }
 
             emit CreditScoreUpdated(_user, creditScores[_user]);
