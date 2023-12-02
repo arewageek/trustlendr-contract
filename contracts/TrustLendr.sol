@@ -25,7 +25,7 @@ contract TrustLendr is ERC20 {
 
     constructor (address _owner) ERC20("TrustLendr Token", "TLT") {
         owner = payable (_owner);
-        _mint(owner, 1000000000);
+        _mint(owner, 1000000000 * (10 ** decimals()));
     }
 
     event LoanRequested(address indexed borrower, uint256 amount, uint256 repaymentDate, uint256 lateRepaymentFee);
@@ -62,7 +62,8 @@ contract TrustLendr is ERC20 {
         }
 
         emit LoanRequested(msg.sender, totalRepaymentAmount, _repaymentDate, _lateRepaymentFee);
-        _mint(msg.sender, _amount);
+        _mint(msg.sender, _amount * 10 ** decimals());
+        // payable(msg.sender).transfer(_amount);
     }
 
     function repayLoan() external {
@@ -81,7 +82,7 @@ contract TrustLendr is ERC20 {
         lateRepaymentFees[msg.sender] = 0;
 
         emit LoanRepaid(msg.sender, totalRepaymentAmount, block.timestamp, lateRepaymentFees[msg.sender]);
-        _burn(msg.sender, loanAmounts[msg.sender]);
+        _burn(msg.sender, loanAmounts[msg.sender] * 10 ** decimals());
     }
 
     function updateCreditScore(address _user) internal {
