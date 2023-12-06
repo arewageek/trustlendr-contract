@@ -48,22 +48,23 @@ contract TrustLendr is ERC20 {
         require(_amount > 0, "Invalid loan amount");
 
         // Apply interest rate to the loan amount
-        uint256 totalRepaymentAmount = _amount + (_amount * _interestRate / 100);
+        uint256 totalRepaymentAmount = _amount + (_amount + _interestRate);
 
         // Update loan details
         loanAmounts[msg.sender] = totalRepaymentAmount;
         loanRepaymentDates[msg.sender] = _repaymentDate;
         lateRepaymentFees[msg.sender] = _lateRepaymentFee;
 
-        uint score = creditScores[msg.sender];
+        uint256 score = creditScores[msg.sender];
 
         if(score == 0){
             creditScores[msg.sender] = 850;
         }
+        else{
+            creditScores[msg.sender] = score - 10;
+        }
 
         emit LoanRequested(msg.sender, totalRepaymentAmount, _repaymentDate, _lateRepaymentFee);
-        _mint(msg.sender, _amount * 10 ** decimals());
-        // payable(msg.sender).transfer(_amount);
     }
 
     function repayLoan() external {
@@ -71,7 +72,7 @@ contract TrustLendr is ERC20 {
         require(loanRepaymentDates[msg.sender] != 0, "No outstanding loan");
 
         // Calculate total repayment amount
-        uint256 totalRepaymentAmount = calculateAccruedInterest(msg.sender);
+        uint256 totalRepaymentAmount = loanAmounts[msg.sender];
 
         // Update credit score based on repayment date
         updateCreditScore(msg.sender);
@@ -82,7 +83,6 @@ contract TrustLendr is ERC20 {
         lateRepaymentFees[msg.sender] = 0;
 
         emit LoanRepaid(msg.sender, totalRepaymentAmount, block.timestamp, lateRepaymentFees[msg.sender]);
-        _burn(msg.sender, loanAmounts[msg.sender] * 10 ** decimals());
     }
 
     function updateCreditScore(address _user) internal {
