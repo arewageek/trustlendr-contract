@@ -75,7 +75,7 @@ contract TrustLendr is ERC20 {
         uint256 totalRepaymentAmount = loanAmounts[msg.sender];
 
         // Update credit score based on repayment date
-        updateCreditScore(msg.sender);
+        // updateCreditScore(msg.sender, creditScore);
 
         // Reset loan details
         loanAmounts[msg.sender] = 0;
